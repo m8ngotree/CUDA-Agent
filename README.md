@@ -1,6 +1,6 @@
 # CUDA-Agent: Large-Scale Agentic RL for High-Performance CUDA Kernel Generation
 
-Project page: [CUDA-Agent.github.io](https://nwiad.github.io/CUDA-Agent.github.io/)
+Project page: [CUDA-Agent.github.io](https://cuda-agent.github.io/)
 
 ## 1. Project Overview
 
