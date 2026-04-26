@@ -1,0 +1,81 @@
+# Configuration for the CUDA-Agent pipeline (paper §3).
+# Every field is consumed by exactly one stage; stages are independently runnable.
+
+target: cuda
+
+crawl:
+  sources: ["torch", "transformers"]
+  torch_modules: ["torch.nn", "torch.nn.functional"]
+  transformers_filter:
+    exclude_with_past_key_values: true
+    exclude_with_attention_mask: true
+    include_pure_mlp: true
+    include_normalization: true
+  output_dir: "data/raw"
+
+synthesis:
+  # OpenAI-compatible client. Override `base_url` for non-OpenAI endpoints.
+  model: "claude-sonnet-4-20250514"
+  provider: "anthropic"        # "anthropic" | "openai"
+  base_url: null
+  n_problems_target: 15000
+  min_ops: 2
+  max_ops: 5                   # paper §3.1
+  temperature: 0.8
+  max_tokens: 2048
+  output_dir: "data/synthesized"
+  resume: true
+
+filter:
+  eager_time_min_ms: 1.0       # paper §3.1
+  eager_time_max_ms: 100.0     # paper §3.1
+  determinism_atol: 1e-5
+  anti_trivial_atol: 1e-3
+  zero_output_atol: 1e-4
+  decontamination_threshold: 0.7
+  kernelbench_path: "data/kernelbench"
+  output_dir: "data/filtered"
+  target_n: 6000               # paper: CUDA-Agent-Ops-6K
+  subprocess_timeout_s: 30
+  bench_warmup: 5
+  bench_iters: 20
+  device: "cuda"
+
+dataset:
+  hf_repo_id: "${HF_USERNAME}/cuda-agent-ops"
+  splits: { train: 0.95, validation: 0.05 }
+  output_dir: "data/dataset"
+
+agent:
+  workdir: "agent/workdir"
+  skill_md: "agent/workdir/SKILL.md"
+  reward_speedup_threshold: 0.05  # paper §3.2
+  max_turns_train: 150            # paper
+  max_turns_eval: 200             # paper
+  subprocess_timeout_s: 60
+
+train:
+  base_model: "Qwen/Qwen2.5-Coder-7B-Instruct"
+  algorithm: "ppo"
+  global_batch_size: 1024         # paper
+  micro_batch_size: 8
+  learning_rate_actor: 3.0e-6     # paper
+  learning_rate_critic: 6.0e-6    # paper
+  clip_epsilon_lower: 0.2         # paper Eq. 5
+  clip_epsilon_upper: 0.28        # paper Eq. 5
+  single_turn_context: 32768
+  agentic_context: 131072
+  agentic_rl_steps: 150           # paper
+  gae_gamma: 1.0                  # paper
+  gae_lambda: 0.95                # paper
+  rft_max_samples: 50000
+  rft_epochs: 2
+  value_pretrain_steps: 5000
+  value_pretrain_target_explained_variance: 0.5
+  output_dir: "checkpoints"
+  wandb_project: "kernel-agent"
+
+eval:
+  benchmarks: ["kernelbench_l1", "kernelbench_l2", "kernelbench_l3"]
+  n_problems: 250
+  output_dir: "eval_results"

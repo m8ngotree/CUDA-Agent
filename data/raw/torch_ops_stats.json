@@ -1,0 +1,15 @@
+{
+  "funnel": {
+    "kept": 234,
+    "seen": 257,
+    "skip_abstract_or_container": 9,
+    "skip_non_deterministic": 12,
+    "skip_uses_distributed": 2
+  },
+  "modules": [
+    "torch.nn",
+    "torch.nn.functional"
+  ],
+  "torch_version": "2.11.0",
+  "total_kept": 234
+}

@@ -1,0 +1,15 @@
+{
+  "filter_cfg": {
+    "exclude_with_attention_mask": true,
+    "exclude_with_past_key_values": true,
+    "include_normalization": true,
+    "include_pure_mlp": true
+  },
+  "funnel": {
+    "modeling_modules_loaded": 3,
+    "modeling_modules_seen": 367,
+    "module_import_failed": 364
+  },
+  "total_kept": 0,
+  "transformers_version": "4.46.3"
+}

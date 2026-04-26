@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kernel-agent"
+version = "0.1.0"
+description = "CUDA + Triton Agent: large-scale agentic RL for high-performance kernel generation."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "kernel-agent" }]
+
+dependencies = [
+    "torch>=2.4",
+    "transformers>=4.45",
+    "datasets>=2.20",
+    "huggingface_hub>=0.25",
+    "pydantic>=2.6",
+    "loguru>=0.7",
+    "PyYAML>=6.0",
+    "datasketch>=1.6",
+    "numpy>=1.26",
+    "tqdm>=4.66",
+    "requests>=2.32",
+    "openai>=1.40",
+    "anthropic>=0.34",
+    "wandb>=0.17",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+triton = ["triton>=3.0"]
+train = [
+    "accelerate>=0.34",
+    "peft>=0.12",
+    "trl>=0.10",
+    "deepspeed>=0.15",
+    "bitsandbytes>=0.43",
+]
+eval = ["scipy>=1.13"]
+
+[tool.setuptools.packages.find]
+include = ["data*", "agent*", "train*", "eval*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501", "B008"]

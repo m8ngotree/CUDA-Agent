@@ -1,0 +1,84 @@
+# Triton variant of the kernel-agent pipeline.
+# Inherits everything from cuda_pipeline.yaml; overrides only Triton-specific knobs.
+
+target: triton
+
+crawl:
+  sources: ["torch", "transformers"]
+  torch_modules: ["torch.nn", "torch.nn.functional"]
+  transformers_filter:
+    exclude_with_past_key_values: true
+    exclude_with_attention_mask: true
+    include_pure_mlp: true
+    include_normalization: true
+  output_dir: "data/raw"
+
+synthesis:
+  target: "triton"
+  skill_md: "agent/workdir/SKILL_TRITON.md"
+  model: "claude-sonnet-4-20250514"
+  provider: "anthropic"
+  base_url: null
+  n_problems_target: 15000
+  min_ops: 2
+  max_ops: 5
+  temperature: 0.8
+  max_tokens: 2048
+  output_dir: "data/synthesized_triton"
+  resume: true
+
+filter:
+  eager_time_min_ms: 1.0
+  eager_time_max_ms: 100.0
+  determinism_atol: 1e-5
+  anti_trivial_atol: 1e-3
+  zero_output_atol: 1e-4
+  verification_atol: 1.0e-3       # relaxed for Triton fp32 accumulation
+  profiling_warmup: 10            # more warmup for Triton JIT
+  decontamination_threshold: 0.7
+  kernelbench_path: "data/kernelbench"
+  output_dir: "data/filtered_triton"
+  target_n: 6000
+  subprocess_timeout_s: 30
+  bench_warmup: 10
+  bench_iters: 20
+  device: "cuda"
+
+dataset:
+  hf_repo_id: "${HF_USERNAME}/triton-agent-ops"
+  splits: { train: 0.95, validation: 0.05 }
+  output_dir: "data/dataset_triton"
+
+agent:
+  workdir: "agent/workdir"
+  skill_md: "agent/workdir/SKILL_TRITON.md"
+  reward_speedup_threshold: 0.05
+  max_turns_train: 150
+  max_turns_eval: 200
+  subprocess_timeout_s: 60
+
+train:
+  base_model: "Qwen/Qwen2.5-Coder-7B-Instruct"
+  algorithm: "ppo"
+  global_batch_size: 1024
+  micro_batch_size: 8
+  learning_rate_actor: 3.0e-6
+  learning_rate_critic: 6.0e-6
+  clip_epsilon_lower: 0.2
+  clip_epsilon_upper: 0.28
+  single_turn_context: 32768
+  agentic_context: 131072
+  agentic_rl_steps: 150
+  gae_gamma: 1.0
+  gae_lambda: 0.95
+  rft_max_samples: 50000
+  rft_epochs: 2
+  value_pretrain_steps: 5000
+  value_pretrain_target_explained_variance: 0.5
+  output_dir: "checkpoints_triton"
+  wandb_project: "kernel-agent-triton"
+
+eval:
+  benchmarks: ["tritonbench"]
+  n_problems: 250
+  output_dir: "eval_results_triton"
